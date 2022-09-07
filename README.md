@@ -1,14 +1,17 @@
-# Welcome to your CDK TypeScript project
+# Table Size Metrics Publisher
 
-This is a blank project for CDK development with TypeScript.
+This sample application uses Amazon EventBridge, Lambda and CloudWatch Metrics to plot your DynamoDB tables size over time, at a granularity of 6 hour periods.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-## Useful commands
+## How to run
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+Steps below assume you have `aws-cli` configured on your machine and you have run `cdk bootstrap`:
+
+* Clone this repo 
+  * `git clone https://github.com/LeeroyHannigan/DynamoDB-Track-Table-Size.git` 
+* Navigate to the root 
+  * `cd DynamoDB-Track-Table-Size`
+* Install npm packages 
+  * `npm i`
+* Deploy CDK Stack
+  * `cdk deploy`
