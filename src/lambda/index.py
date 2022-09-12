@@ -13,7 +13,18 @@ def get_size(tables):
     for table in tables:
         try:
             res = dynamodb.describe_table(TableName=table)
-            table_and_size.append({'TableName': table, 'TableSize': res['Table']['TableSizeBytes']})
+            # Add Size for Base Table
+            table_and_size.append({'TableName': table, 'Size': res['Table']['TableSizeBytes']})
+            # Check for GSI's and Add Size
+            if 'GlobalSecondaryIndexes' in res['Table']:
+                for index in res['Table']['GlobalSecondaryIndexes']:
+                    table_and_size.append(
+                        {'IndexName': index['IndexName'], 'Size': index['IndexSizeBytes'], 'TableName': table, 'IndexType': 'Global'})
+            # Check for LSI's and Add Size            
+            if 'LocalSecondaryIndexes' in res['Table']:
+                for index in res['Table']['LocalSecondaryIndexes']:
+                    table_and_size.append(
+                        {'IndexName': index['IndexName'], 'Size': index['IndexSizeBytes'], 'TableName': table, 'IndexType': 'Local'})
         except Exception as e:
             sys.exit(e.response['ResponseMetadata'])
     return table_and_size
@@ -21,23 +32,34 @@ def get_size(tables):
 # Publish Table Size Metrics to CloudWatch
 def publish_metrics(metrics):
     for metric in metrics:
+        # Table Alone
+        dimensions = [{
+            'Name': 'TableName',
+            'Value': metric['TableName']
+        }]
+        # Table with Indexes
+        if 'IndexName' in metric:
+            dimensions.extend([{
+                'Name': 'IndexName',
+                'Value': metric['IndexName']
+            }, {
+                'Name': 'IndexType',
+                'Value': metric['IndexType']
+            }])
+
         try:
             cloudwatch.put_metric_data(
                 Namespace='DynamoDB Table Size',
                 MetricData=[
                     {
                         'MetricName': 'Table Size',
-                        'Dimensions': [
-                            {
-                                'Name': 'TableName',
-                                'Value': metric['TableName']
-                            }
-                        ],
-                        'Value': metric['TableSize'],
+                        'Dimensions': dimensions,
+                        'Value': metric['Size'],
                         'Unit': 'Bytes'
                     },
                 ]
             )
+
         except Exception as e:
             sys.exit(e.response['ResponseMetadata'])
 
